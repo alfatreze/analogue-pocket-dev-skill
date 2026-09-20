@@ -1,0 +1,70 @@
+{
+  "base": "https://www.analogue.co",
+  "pages": [
+    "/developer/docs/bus-communication",
+    "/developer/docs/changelog/1-1-beta-1",
+    "/developer/docs/changelog/1-1-beta-3",
+    "/developer/docs/changelog/1-1-beta-4",
+    "/developer/docs/changelog/1-1-beta-5",
+    "/developer/docs/changelog/1-1-beta-6",
+    "/developer/docs/changelog/1-1-beta-7",
+    "/developer/docs/changelog/1-1",
+    "/developer/docs/changelog/1-2",
+    "/developer/docs/changelog/2-0",
+    "/developer/docs/changelog/2-1",
+    "/developer/docs/changelog/2-3",
+    "/developer/docs/chip32-vm",
+    "/developer/docs/chip32-vm/alu-logic",
+    "/developer/docs/chip32-vm/alu",
+    "/developer/docs/chip32-vm/debugging",
+    "/developer/docs/chip32-vm/file-process",
+    "/developer/docs/chip32-vm/initialization-of-the-chip32-vm",
+    "/developer/docs/chip32-vm/jump-and-flow-control",
+    "/developer/docs/chip32-vm/load-and-store",
+    "/developer/docs/chip32-vm/opcode-mnemonic",
+    "/developer/docs/chip32-vm/shift",
+    "/developer/docs/chip32-vm/special",
+    "/developer/docs/core-boot-process",
+    "/developer/docs/core-definition-files",
+    "/developer/docs/core-definition-files/audio-json",
+    "/developer/docs/core-definition-files/core-json",
+    "/developer/docs/core-definition-files/data-json",
+    "/developer/docs/core-definition-files/input-json",
+    "/developer/docs/core-definition-files/instance-json",
+    "/developer/docs/core-definition-files/interact-json",
+    "/developer/docs/core-definition-files/variants-json",
+    "/developer/docs/core-definition-files/video-json",
+    "/developer/docs/custom-interact-ui",
+    "/developer/docs/custom-palettes",
+    "/developer/docs/debugging-aids",
+    "/developer/docs/directories-and-sd-folder-structure",
+    "/developer/docs/external-hardware",
+    "/developer/docs/getting-started",
+    "/developer/docs/host-target-commands",
+    "/developer/docs/library",
+    "/developer/docs/overview",
+    "/developer/docs/packaging-a-core",
+    "/developer/docs/platform-metadata"
+  ],
+  "repo_src": [
+    {
+      "repo": "https://github.com/open-fpga/core-template",
+      "files": {
+        "src/fpga/core/core_bridge_cmd.v": "core_bridge_cmd.template.v",
+        "src/fpga/core/core_top.v": "core_top.template.v"
+      }
+    },
+    {
+      "repo": "https://github.com/open-fpga/core-example-basicchip32",
+      "files": {
+        "src/chip32/example_chip32.asm": "example_chip32.asm"
+      }
+    },
+    {
+      "repo": "https://github.com/open-fpga/bass-chip32",
+      "files": {
+        "architectures/chip32.vm.arch": "chip32.vm.arch"
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# Third-party material fetched locally by scripts/bootstrap.py; never redistributed here
+references/docs-snapshot/
+references/repo-src/
+# Project-private knowledge (entries, notes, logs); stays on your machine
+references/knowledge-base/local-entries/
+references/knowledge-base/local/
+references/knowledge-base/INDEX.local.md
+__pycache__/
+*.skill

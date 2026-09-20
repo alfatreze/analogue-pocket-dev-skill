@@ -1,0 +1,110 @@
+{
+  "repos": [
+    {
+      "url": "https://github.com/open-fpga/core-template",
+      "why": "official template",
+      "head": "da3a021b1eaf742604d86d8dc9b33a6666263e6a"
+    },
+    {
+      "url": "https://github.com/open-fpga/core-example-basicassets",
+      "why": "official example",
+      "head": "e5f9c0a6bb92b50a47e8be597b7910cb2670ae3c"
+    },
+    {
+      "url": "https://github.com/open-fpga/core-example-interact",
+      "why": "official example",
+      "head": "dc9cddf5ec1a29edfc897898560459db21743b28"
+    },
+    {
+      "url": "https://github.com/open-fpga/core-example-basicchip32",
+      "why": "official example",
+      "head": "433e1be814ba2859e78cbdd1f1b69a6bdfe14872"
+    },
+    {
+      "url": "https://github.com/open-fpga/core-example-kbmouse-targetdata",
+      "why": "official example: target read/write",
+      "head": "acedd4530600aa3a79bc6c8df7462ceae5373c34"
+    },
+    {
+      "url": "https://github.com/open-fpga/bass-chip32",
+      "why": "official chip32 assembler",
+      "head": "9e4a919d1ff39b217b75e090e996148654d3f9d7"
+    },
+    {
+      "url": "https://github.com/agg23/analogue-pocket-utils",
+      "why": "IP + wiki (community, high trust)",
+      "head": "78482d1b363606336f4535aa0adc2e957bc20558"
+    },
+    {
+      "url": "https://github.com/agg23/analogue-pocket-utils.wiki.git",
+      "why": "agg23 wiki learnings",
+      "head": "c1280cc4098061ab1c38d50aa950e28e8cf9c9fa"
+    },
+    {
+      "url": "https://github.com/agg23/openfpga-NES",
+      "why": "reference savestate/save-size implementation",
+      "head": "a72c7ed30b16a287bc8ec3969e49963574136811"
+    },
+    {
+      "url": "https://github.com/agg23/openfpga-litex",
+      "why": "RISC-V soft-CPU platform; file API notes",
+      "head": "c21570d85260856c10f7b11c9e4d233c0fe65748"
+    },
+    {
+      "url": "https://github.com/janisc/openfpga-NGPC",
+      "why": "AI-built core; hardware-tested save/flush/savestate lessons",
+      "head": "39f1bb34faab44529ddda0adad1dc621a00252cd"
+    },
+    {
+      "url": "https://github.com/thekoalakoa/paprium-pocket",
+      "why": "timing/seed/fit discipline docs",
+      "head": "c7a3fb2a2962a3975f3ed85f2990e5f19c49c934"
+    },
+    {
+      "url": "https://github.com/opengateware/gateman-pocket",
+      "why": "alternative platform layer",
+      "head": "61c7e909004423a28481d4e70821a3bbf85e92cb"
+    },
+    {
+      "url": "https://github.com/mincer-ray/openfpga-GBA",
+      "why": "GBA port: SDRAM/PSRAM/saves",
+      "head": "a2ab8b37e21a621adb547e9a386c827fd9815512"
+    },
+    {
+      "url": "https://github.com/Mazamars312/Analogue_Pocket_Neogeo_Overdrive",
+      "why": "soft-CPU bridge design",
+      "head": "7846f763d176f228860722a25bb68c1275c2d149"
+    },
+    {
+      "url": "https://github.com/openfpga-library/analogue-pocket",
+      "why": "openFPGA library metadata",
+      "head": "732a21e87151349c353ac4d97a8a71e22119dd77"
+    },
+    {
+      "url": "https://codeberg.org/DidierMalenfant/openFPGA-tutorials",
+      "why": "tutorials + pf-dev-tools build system",
+      "head": null
+    },
+    {
+      "url": "https://github.com/K3v-68/k3v-gba",
+      "why": "GBA core with save-path audit (PSRAM unloader handshakes, RTC sidecar slot), balanced-seed timing",
+      "head": "7131cc7a58daf812cb6e3140eedab1a47c7203af"
+    },
+    {
+      "url": "https://github.com/openfpgaOS/openfpgaSDK",
+      "why": "SDK with nonvolatile save slots at bridge 0x20100000 (data.json + README)",
+      "head": "a408ddc12aed0dfaa4aa22c06af82f829db77126"
+    },
+    {
+      "url": "https://github.com/plasticbugs/pocket-core-template",
+      "why": "arcade core template + METHODOLOGY.md (SDRAM capture phase, loader FIFO, bring-up bench lessons)",
+      "head": "2ee52fc376b1f30c41852f0a912587616b0f073a"
+    },
+    {
+      "url": "https://github.com/drizzt/openfpga-SMS",
+      "why": "SMS core, EEPROM cart saves, active (v1.6.1 2026-09-05); not yet read in depth",
+      "head": "96c9f5912ad0f9a9675381610faa57b9e0ceeef7"
+    }
+  ],
+  "docs_base": "https://www.analogue.co/developer/docs"
+}
