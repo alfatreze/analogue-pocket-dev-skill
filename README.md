@@ -16,13 +16,16 @@ Claude.ai: zip the folder and upload under Settings > Skills.
 - `SKILL.md`: router, mental model, boot sequence, practices, and the rules for evolving the knowledge base
 - `references/*.md`: JSON files, commands, hardware/video/audio, Chip32, SD/packaging, changelog, template internals
 - `references/knowledge-base/`: `INDEX.md`, `entries/KB-*.md` (status: community-reported, docs-verified, source-verified, hardware-validated, disputed, refuted), `approaches.md`, `open-questions.md`, `resources.md`, `sources.json`
-- `scripts/kb.py`: validate / index / new / note / promote / stale. `scripts/refresh.py`: detect doc and repo drift. `scripts/bootstrap.py`: fetch third-party material locally
+- `scripts/kb.py`: validate / index / new / note / promote / stale. `scripts/refresh.py`: detect doc and repo drift. `scripts/bootstrap.py`: fetch third-party material locally. `scripts/release.py`: validate, review, commit, push and rebuild the `.skill` in one command
 
 ## How knowledge is graded
 A claim starts `community-reported`. It becomes `source-verified` only with two independent sources (or docs plus code) and `hardware-validated` only with a recorded Pocket test. Contradicted claims are kept as `refuted`/`disputed`. The skill instructs Claude to treat unvalidated claims as leads to test, never facts.
 
 ## Private, project-specific knowledge
 Results from your own project go in git-ignored `references/knowledge-base/local-entries/` (`kb.py new --local`) and `local/` (`kb.py note`), so the public repo stays general.
+
+## Releasing
+`python3 scripts/release.py` validates, shows the diff, asks before committing and before pushing, then rebuilds `analogue-pocket-dev.skill` from committed content only (`--dry-run` to preview, `--yes -m "msg"` to skip prompts). Re-upload the `.skill` in Claude.ai afterwards; that copy never auto-updates.
 
 ## Guards
 `kb.py validate` (also run by the pre-commit hook: `python3 scripts/kb.py install-hook`) fails when a committed claim is rewritten, evidence loses text, or project-private text (audit-trail ids (a letter, hyphen and three digits), local paths, plus names listed in your git-ignored `references/knowledge-base/local/private-patterns.txt`) appears in a publishable file.
