@@ -16,6 +16,10 @@ Source: developer/docs/host-target-commands. Verified against `open-fpga/core-te
 
 Template BRAM-less layout: host params 0x20..0x2C, host response 0x40..0x4C, target params 0x1020.., target response 0x1040...
 
+### Datatable bridge address and wrong-base transfers (hardware-observed gotcha)
+The datatable is bridged at `0xF8002000`: word N of the table is at `0xF8002000 + 4*N` (two words per slot: id, then size). Reading or writing it at another base (for example `0xF8000000`, the host command block) reads or writes the wrong registers.
+A target read/write (0x0180/0x0184) whose *bridge address* argument uses a wrong base still completes with result code 0, but moves wrong data (a write can store zeros). Result 0 only means the transfer finished, not that the addresses were right, so always read back or checksum the data after the first transfer of a new design. Observed on one core on real hardware (2026-09); not stated in Analogue's docs.
+
 ### Data slot ID/size table
 Per entry: Word0 `[15:0]` slot ID (json id), Word1 `[31:0]` size in bytes (0 = unused). Pocket writes the loaded file size; core may change it (esp. nonvolatile save files). Pocket reads it back on flush/shutdown and resizes the SD file. For deferload slots ID+size are still written. >4 GB files: Word0 `[31:16]` = size bits 47:32.
 

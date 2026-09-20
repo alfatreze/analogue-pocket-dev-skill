@@ -7,7 +7,8 @@
   kb.py index                    regenerate references/knowledge-base/INDEX.md
   kb.py new "title" [--tags a,b] [--source URL ...] [--local]  create a community-reported entry (--local = git-ignored, project-private)
   kb.py note KB-001 "text"     add a project-specific relevance note (git-ignored)
-  kb.py promote KB-001 --to STATUS --evidence "text"  change status, log it
+  kb.py promote KB-001 --to STATUS --evidence "text" --title-contains "words in title"
+                                 change status (refuses if the title does not match; backs up the entry first)
   kb.py stale [--days N]         entries needing (re)verification
   kb.py show KB-001
 
@@ -19,7 +20,7 @@ Status ladder (never skip evidence):
   refuted             a test or source contradicts it (kept, never deleted)
   disputed            credible sources conflict (kept until resolved)
 """
-import argparse, datetime, os, re, subprocess, sys
+import argparse, datetime, os, re, shutil, subprocess, sys
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 KB = os.path.join(ROOT, "references", "knowledge-base")
@@ -211,13 +212,8 @@ def slug(t):
     return re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")[:50]
 
 
-def next_id():
-    n = [int(m["id"].split("-")[1]) for _, m, *_ in entries()] or [0]
-    return "KB-%03d" % (max(n) + 1)
-
-
 def new(a):
-    i = next_id()
+    i = claim_id()
     ent = LOC if a.local else ENT
     os.makedirs(ent, exist_ok=True)
     src = "".join(f"  - {s}\n" for s in (a.source or ["TODO: add source"]))
@@ -226,8 +222,33 @@ def new(a):
             f"applies_to: unknown\nsources:\n{src}---\n\n## Claim\n\n## Evidence\n\n"
             f"## How to validate on hardware\n")
     p = os.path.join(ent, f"{i}-{slug(a.title)}.md")
-    open(p, "w").write(body)
-    print("created", p)
+    open(p, "x").write(body)
+    print(f"created {i}  path: {p}")
+    print("edit ONLY this path; never assume the next free id (other sessions and the weekly refresh write here too)")
+
+
+def backup(path):
+    """Copy an existing entry to local/backups/ (git-ignored) before any write."""
+    d = os.path.join(KB, "local", "backups")
+    os.makedirs(d, exist_ok=True)
+    dst = os.path.join(d, datetime.datetime.now().strftime("%Y%m%d-%H%M%S-") + os.path.basename(path))
+    shutil.copy2(path, dst)
+    return dst
+
+
+def claim_id():
+    """Allocate the next free id atomically. A marker file created with O_EXCL means two sessions
+    running `new` at the same time can never get the same id (unlike 'max existing id + 1')."""
+    cd = os.path.join(KB, "local", "claims")
+    os.makedirs(cd, exist_ok=True)
+    n = max([int(m["id"].split("-")[1]) for _, m, *_ in entries()] or [0]) + 1
+    while True:
+        i = "KB-%03d" % n
+        try:
+            os.close(os.open(os.path.join(cd, i), os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+            return i
+        except FileExistsError:
+            n += 1
 
 
 def find(i):
@@ -241,6 +262,10 @@ def promote(a):
     if a.to not in STATUSES:
         sys.exit(f"status must be one of {STATUSES}")
     p, m, body, raw = find(a.id)
+    if a.title_contains.lower() not in m["title"].lower():
+        sys.exit(f"REFUSED: {a.id} is titled {m['title']!r}, which does not contain {a.title_contains!r}. "
+                 "Re-list entries (kb.py index) and confirm the id; entries can be created concurrently by other sessions.")
+    bk = backup(p)
     old = m["status"]
     raw = re.sub(r"^status: .*$", f"status: {a.to}", raw, count=1, flags=re.M)
     raw = re.sub(r"^last_verified: .*$", f"last_verified: {TODAY}", raw, count=1, flags=re.M)
@@ -249,8 +274,8 @@ def promote(a):
     open(p, "w").write(raw)
     os.makedirs(os.path.join(KB, "local"), exist_ok=True)
     with open(os.path.join(KB, "local", "LOG.md"), "a") as f:
-        f.write(f"- {TODAY} {a.id}: {old} -> {a.to}. {a.evidence}\n")
-    print(f"{a.id}: {old} -> {a.to}")
+        f.write(f"- {TODAY} {a.id} ({m['title'][:60]}): {old} -> {a.to}. {a.evidence} [backup: {os.path.basename(bk)}]\n")
+    print(f"{a.id}: {old} -> {a.to}  (backup: {bk})")
     if validate() == 0:
         index()
 
@@ -273,6 +298,7 @@ def main():
     n = sp.add_parser("new"); n.add_argument("title"); n.add_argument("--tags"); n.add_argument("--source", action="append"); n.add_argument("--local", action="store_true", help="project-private entry (git-ignored)")
     nt = sp.add_parser("note", help="append a project-specific relevance note (git-ignored)"); nt.add_argument("id"); nt.add_argument("text")
     pr = sp.add_parser("promote"); pr.add_argument("id"); pr.add_argument("--to", required=True); pr.add_argument("--evidence", required=True)
+    pr.add_argument("--title-contains", required=True, help="text the entry title must contain; guards against a stale or wrong id")
     st = sp.add_parser("stale"); st.add_argument("--days", type=int, default=180)
     sh = sp.add_parser("show"); sh.add_argument("id")
     a = ap.parse_args()
