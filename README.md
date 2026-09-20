@@ -24,5 +24,8 @@ A claim starts `community-reported`. It becomes `source-verified` only with two 
 ## Private, project-specific knowledge
 Results from your own project go in git-ignored `references/knowledge-base/local-entries/` (`kb.py new --local`) and `local/` (`kb.py note`), so the public repo stays general.
 
+## Guards
+`kb.py validate` (also run by the pre-commit hook: `python3 scripts/kb.py install-hook`) fails when a committed claim is rewritten, evidence loses text, or project-private text (audit-trail ids (a letter, hyphen and three digits), local paths, plus names listed in your git-ignored `references/knowledge-base/local/private-patterns.txt`) appears in a publishable file.
+
 ## Contributing
 Add entries with `python3 scripts/kb.py new ...`, then `kb.py validate` and `kb.py index`. Include exact source links, scope (firmware/core/date) and a hardware validation test.

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Knowledge-base tool for the analogue-pocket-dev skill (stdlib only).
 
-  kb.py validate                 lint every entry (exit 1 on problems)
+  kb.py validate [--allow-claim-edit KB-nnn]  lint entries + guards: no project-private text in publishable files,
+                                 no rewritten claims / truncated evidence vs git HEAD (exit 1 on problems)
+  kb.py install-hook             pre-commit hook that runs validate
   kb.py index                    regenerate references/knowledge-base/INDEX.md
   kb.py new "title" [--tags a,b] [--source URL ...] [--local]  create a community-reported entry (--local = git-ignored, project-private)
   kb.py note KB-001 "text"     add a project-specific relevance note (git-ignored)
@@ -17,7 +19,7 @@ Status ladder (never skip evidence):
   refuted             a test or source contradicts it (kept, never deleted)
   disputed            credible sources conflict (kept until resolved)
 """
-import argparse, datetime, os, re, sys
+import argparse, datetime, os, re, subprocess, sys
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 KB = os.path.join(ROOT, "references", "knowledge-base")
@@ -65,7 +67,84 @@ def entries():
     return out
 
 
-def validate():
+# ---------------------------------------------------------------- guards ----
+# Public files must stay general and existing claims must not be rewritten.
+DEFAULT_PRIVATE = [r"\bA-\d{3}\b", r"AUDIT_TRAIL", r"/Users/", r"docs/vendor", r"CURRENT_STATUS"]
+PRIVATE_FILE = os.path.join(KB, "local", "private-patterns.txt")  # git-ignored; add project names here
+
+
+def git(*args):
+    r = subprocess.run(["git", "-C", ROOT, *args], capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else None
+
+
+def private_patterns():
+    pats = list(DEFAULT_PRIVATE)
+    if os.path.exists(PRIVATE_FILE):
+        pats += [l.strip() for l in open(PRIVATE_FILE) if l.strip() and not l.startswith("#")]
+    return [re.compile(x, re.I if i >= len(DEFAULT_PRIVATE) else 0) for i, x in enumerate(pats)]
+
+
+def publishable_files():
+    """Files that would be published: tracked + untracked-but-not-ignored (md/json, excluding scripts)."""
+    out = git("ls-files", "--cached", "--others", "--exclude-standard")
+    if out is None:
+        return None
+    return [f for f in out.split("\n") if f.endswith((".md", ".json")) and not f.startswith("scripts/")
+            and f not in ("LICENSE", "NOTICE.md")]
+
+
+def leak_guard(errs):
+    files = publishable_files()
+    if files is None:
+        print("note: not a git checkout, leak guard skipped"); return
+    pats = private_patterns()
+    for f in files:
+        path = os.path.join(ROOT, f)
+        if not os.path.exists(path):
+            continue
+        for n, line in enumerate(open(path, encoding="utf-8", errors="ignore"), 1):
+            for pat in pats:
+                if pat.search(line):
+                    errs.append(f"LEAK {f}:{n} matches /{pat.pattern}/ (project-private text in a publishable file; "
+                                f"use `kb.py new --local` or `kb.py note`)")
+                    break
+
+
+def section(body, name):
+    m = re.search(rf"## {name}\n(.*?)(?=\n## |\Z)", body, re.S)
+    return m.group(1).strip() if m else ""
+
+
+def immutable_guard(errs, allow):
+    """A published claim must not be rewritten. Evidence may grow but not lose text."""
+    top = git("rev-parse", "--show-toplevel")
+    if top is None:
+        return
+    top = top.strip()
+    for p, m, body, _ in entries():
+        if os.path.dirname(p) != ENT or m["id"] in allow:
+            continue
+        old = git("show", "HEAD:" + os.path.relpath(p, top))
+        if old is None:
+            continue  # new, uncommitted entry
+        try:
+            om = re.match(r"---\n(.*?)\n---\n?(.*)", old, re.S)
+            obody = om.group(2)
+        except AttributeError:
+            continue
+        if section(body, "Claim") != section(obody, "Claim"):
+            errs.append(f"{m['id']}: '## Claim' differs from the committed version. Claims are never rewritten: create a new "
+                        f"entry and mark this one refuted/disputed (kb.py promote), or pass --allow-claim-edit {m['id']} for a typo fix")
+        if section(obody, "Evidence") and section(obody, "Evidence") not in section(body, "Evidence"):
+            errs.append(f"{m['id']}: '## Evidence' lost committed text (evidence may only be appended)")
+        if m["id"] not in allow:
+            ostat = re.search(r"^status: (.*)$", om.group(1), re.M)
+            if ostat and ostat.group(1) != m["status"] and m["status"] == "hardware-validated" and not m.get("evidence"):
+                errs.append(f"{m['id']}: promoted to hardware-validated without evidence")
+
+
+def validate(allow=()):
     errs, ids = [], set()
     for p, m, body, _ in entries():
         n = os.path.basename(p)
@@ -94,6 +173,8 @@ def validate():
         for s in ("## Claim", "## Evidence", "## How to validate"):
             if s not in body:
                 errs.append(f"{n}: missing section '{s}'")
+    leak_guard(errs)
+    immutable_guard(errs, set(allow))
     for e in errs:
         print("ERROR", e)
     print(f"{len(ids)} entries, {len(errs)} problems")
@@ -187,14 +268,21 @@ def stale(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sp = ap.add_subparsers(dest="cmd", required=True)
-    sp.add_parser("validate"); sp.add_parser("index")
+    v = sp.add_parser("validate"); v.add_argument("--allow-claim-edit", action="append", default=[], help="entry id whose claim may differ from HEAD (typo fix)")
+    sp.add_parser("index"); sp.add_parser("install-hook", help="block commits that fail validate")
     n = sp.add_parser("new"); n.add_argument("title"); n.add_argument("--tags"); n.add_argument("--source", action="append"); n.add_argument("--local", action="store_true", help="project-private entry (git-ignored)")
     nt = sp.add_parser("note", help="append a project-specific relevance note (git-ignored)"); nt.add_argument("id"); nt.add_argument("text")
     pr = sp.add_parser("promote"); pr.add_argument("id"); pr.add_argument("--to", required=True); pr.add_argument("--evidence", required=True)
     st = sp.add_parser("stale"); st.add_argument("--days", type=int, default=180)
     sh = sp.add_parser("show"); sh.add_argument("id")
     a = ap.parse_args()
-    if a.cmd == "validate": sys.exit(validate())
+    if a.cmd == "validate": sys.exit(validate(a.allow_claim_edit))
+    elif a.cmd == "install-hook":
+        hp = git("rev-parse", "--git-path", "hooks/pre-commit")
+        hp = os.path.join(ROOT, hp.strip()) if hp else None
+        if not hp: sys.exit("not a git checkout")
+        open(hp, "w").write("#!/bin/sh\ncd \"$(git rev-parse --show-toplevel)\" && python3 scripts/kb.py validate\n")
+        os.chmod(hp, 0o755); print("installed", hp)
     elif a.cmd == "index": index()
     elif a.cmd == "new": new(a)
     elif a.cmd == "promote": promote(a)
