@@ -169,11 +169,17 @@ def validate(allow=()):
             errs.append(f"{n}: hardware-validated needs 'evidence:' naming the test/audit id")
         if st == "source-verified" and len(m.get("sources", [])) < 2:
             errs.append(f"{n}: source-verified needs >=2 sources")
+        if "edition-claim" in [t.lower() for t in m.get("tags", [])] and st in ("docs-verified", "source-verified") and not m.get("evidence"):
+            errs.append(f"{n}: edition-claim entries need an 'evidence:' line naming the report/test/primary page before they can be {st} (test it: scripts/qsf_probe.py or refresh.py edition)")
         if st == "refuted" and not m.get("evidence"):
             errs.append(f"{n}: refuted needs 'evidence:'")
         for s in ("## Claim", "## Evidence", "## How to validate"):
             if s not in body:
                 errs.append(f"{n}: missing section '{s}'")
+    TOOL = {"quartus", "fitter", "dsp", "m10k", "mlab", "sdc", "toolchain", "cyclone-v", "signaltap", "synthesis"}
+    for p_, m_, *_ in entries():
+        if TOOL & {t.lower() for t in m_.get("tags", [])} and not re.search(r"lite|standard|pro\b|edition|quartus", str(m_.get("applies_to", "")), re.I):
+            print(f"WARN {os.path.basename(p_)}: toolchain entry without edition/version in applies_to (say Lite/Standard/Pro and the Quartus version)")
     leak_guard(errs)
     immutable_guard(errs, set(allow))
     for e in errs:

@@ -1,6 +1,6 @@
 ---
 name: analogue-pocket-dev
-description: "Analogue Pocket openFPGA / APF (Analogue Platform Framework) core development reference plus an evidence-graded community knowledge base, built from the full official developer docs, the open-fpga repos and community cores (NES, NGPC, LiteX, Paprium). Use whenever the user works on an Analogue Pocket core or debugs one on hardware: core.json / data.json / interact.json / video.json / input.json / instance JSON, data slots and save persistence, the BRIDGE bus and 0xF8000000 host/target commands (0x0180/0184/0188 slot read/write/flush, savestates), core boot sequence, Chip32 VM assembly, core_top.v / core_bridge_cmd.v / apf_top, SDRAM/PSRAM/SRAM/cartridge/link/IR hardware, video and I2S audio timing, .rbf_r bitstream reversal, packaging zips, SD card layout, JTAG/SignalTap debugging, or the core-template and example cores — even when they never say \"openFPGA\"."
+description: "Analogue Pocket openFPGA / APF (Analogue Platform Framework) core development reference plus Quartus Prime / Cyclone V toolchain constraints and an evidence-graded community knowledge base, built from the full official developer docs, the open-fpga repos, community cores (NES, NGPC, LiteX, Paprium) and Intel/Altera material. Use whenever the user works on an Analogue Pocket core or debugs one on hardware: core.json / data.json / interact.json / video.json / input.json / instance JSON, data slots and save persistence, the BRIDGE bus and 0xF8000000 host/target commands (0x0180/0184/0188 slot read/write/flush, savestates), core boot sequence, Chip32 VM assembly, core_top.v / core_bridge_cmd.v / apf_top, SDRAM/PSRAM/SRAM/cartridge/link/IR hardware, video and I2S audio timing, .rbf_r bitstream reversal, packaging zips, SD card layout, JTAG/SignalTap debugging, or the core-template and example cores; also Quartus Prime Lite/Standard versus Pro edition questions, Cyclone V (5CEBA4F23C8) timing closure, fitter and physical-synthesis settings, M10K/MLAB/DSP mapping, SDC constraints and build-time reduction — even when they never say \"openFPGA\"."
 ---
 
 # Analogue Pocket openFPGA development
@@ -21,6 +21,7 @@ Sources (all read in full): https://www.analogue.co/developer/docs/* (every page
 | Which framework version added what | `references/changelog.md` |
 | Real template/example RTL behavior (what is and isn't implemented) | `references/template-and-examples.md`, `references/repo-src/*.v` |
 | Verbatim doc text for anything above | `references/docs-snapshot/*.txt` (local after bootstrap; grep it) |
+| Quartus edition and Cyclone V constraints (Lite/Standard yes, Pro no), how to verify an edition claim, fetching Intel docs | `references/toolchain-constraints.md` |
 | Community-learned, evidence-graded knowledge (saves/flush, CDC, timing, video, savestates...) | `references/knowledge-base/INDEX.md` then the entry file |
 | Design patterns and workarounds seen in real cores | `references/knowledge-base/approaches.md` |
 | Unknowns with a test plan | `references/knowledge-base/open-questions.md` |
@@ -45,7 +46,8 @@ Shutdown: 0010 Reset Enter → save interact persist → optional slot reload + 
 5. **Rebuild ⇒ re-reverse.** Every Quartus rebuild needs a fresh `.rbf_r`; a stale one silently loads the old core. Compare SHA-256 of the file on the card with the build output.
 6. **Bump `framework.version_required`** whenever using 2.x features (48-bit commands need 2.1) and keep `date_release`/`version` current for packaged releases.
 7. **Use safe defaults for unused I/O** (copy the template tie-offs): mis-set cartridge translators with a powered cart can destroy cart data; PSRAM chip enables must never both assert; IR TX only PWM.
-8. **Record results.** If your project keeps an audit trail or log, record each hardware result (what changed, what was observed, firmware version) so failed hypotheses are not repeated.
+8. **Distrust edition-gating claims; test them.** Cyclone V builds only in Quartus Prime Lite or Standard, never Pro (KB-049), but claims like "X is Standard-only / Pro-only", "Lite lacks X" or "the Pro guide says X works" are unreliable: of the ones checked so far one was refuted by a real Lite report (retiming, KB-050), others cited Pro documents or could not be confirmed. Without clear confirmation (vendor text read for this edition and device, or a run on your own edition), call the claim unconfirmed and suggest a test: `scripts/refresh.py edition <ap_core.fit.rpt>` or a probe project via `scripts/qsf_probe.py make/check`. See `references/toolchain-constraints.md`. Tag such KB entries `edition-claim`; state edition, version and device family in `applies_to`.
+9. **Record results.** If your project keeps an audit trail or log, record each hardware result (what changed, what was observed, firmware version) so failed hypotheses are not repeated.
 
 ## Known doc inconsistencies (don't be misled)
 - core.json sample has `"/"` where `shortname` belongs.

@@ -78,7 +78,7 @@
     {
       "url": "https://github.com/openfpga-library/analogue-pocket",
       "why": "openFPGA library metadata",
-      "head": "732a21e87151349c353ac4d97a8a71e22119dd77"
+      "head": "96c55b2bccf7e13d5a24e6f7be3c15cf1081ffb9"
     },
     {
       "url": "https://codeberg.org/DidierMalenfant/openFPGA-tutorials",
@@ -98,7 +98,7 @@
     {
       "url": "https://github.com/plasticbugs/pocket-core-template",
       "why": "arcade core template + METHODOLOGY.md (SDRAM capture phase, loader FIFO, bring-up bench lessons)",
-      "head": "2ee52fc376b1f30c41852f0a912587616b0f073a"
+      "head": "34bd75888f768d136a53a5663de8f1b2cf0fb555"
     },
     {
       "url": "https://github.com/drizzt/openfpga-SMS",
@@ -106,5 +106,15 @@
       "head": "96c9f5912ad0f9a9675381610faa57b9e0ceeef7"
     }
   ],
-  "docs_base": "https://www.analogue.co/developer/docs"
+  "docs_base": "https://www.analogue.co/developer/docs",
+  "toolchain": {
+    "chart": "https://www.macnica.co.jp/en/business/semiconductor/articles/altera/95849/",
+    "why": "Distributor mirror of Altera's Quartus device-support chart (Altera pages return 403 to scripts); tables are readable and parsed by refresh.py toolchain",
+    "also_watch": [
+      "https://docs.altera.com/",
+      "https://community.altera.com/",
+      "https://en.wikipedia.org/wiki/Quartus_Prime"
+    ],
+    "fetch_notes": "intel.com and altera.com/community pages return HTTP 403 to curl and often to WebFetch; docs.altera.com is JavaScript-rendered; use distributor/university mirrors, Wikipedia, or WebSearch text, and label snippet-only claims low confidence"
+  }
 }

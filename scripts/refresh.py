@@ -5,6 +5,10 @@
   refresh.py docs --update   ...and overwrite references/docs-snapshot with the fresh text
   refresh.py repos           compare watched GitHub repos' HEAD against sources.json, report new commits
   refresh.py repos --update  record the new HEADs
+  refresh.py toolchain       re-read the Quartus edition/device support chart (Macnica mirror of Altera's table) and compare with
+                             references/knowledge-base/toolchain-baseline.json (Cyclone V in Lite/Standard/Pro, new versions)
+  refresh.py edition FILE    read a Quartus report (ap_core.fit.rpt or .map.rpt): edition, version, whether physical-synthesis
+                             options (retiming, duplication) were ON and actually applied. Use it to test edition claims on YOUR build.
 Exit code 0 = nothing changed, 2 = changes found (so it can gate a scheduled task).
 Changes are only REPORTS: read the diff, then add/adjust knowledge-base entries; never auto-edit claims.
 """
@@ -88,11 +92,81 @@ def repos(update):
     return dirty
 
 
+BASELINE = os.path.join(ROOT, "references", "knowledge-base", "toolchain-baseline.json")
+
+
+def _table_rows(tb):
+    return [[html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", c))).replace("\u200b", "").strip()
+             for c in re.findall(r"<t[hd].*?</t[hd]>", tr, flags=re.S)] for tr in re.findall(r"<tr.*?</tr>", tb, flags=re.S)]
+
+
+def read_chart(url):
+    code, raw = fetch(url)
+    if code != "200":
+        sys.exit(f"chart fetch failed: HTTP {code} {url}")
+    tabs = re.findall(r"<table.*?</table>", raw, flags=re.S)
+    if len(tabs) < 2:
+        sys.exit("chart layout changed (expected 2 tables): update read_chart()")
+    pro, sl = _table_rows(tabs[0]), _table_rows(tabs[1])
+    ok = ("\u25cf", "\u2605")  # filled circle, star = supported
+    pro_fam = [r[0] for r in pro[1:]]
+    cv = [r for r in sl[2:] if re.search(r"Cyclone\W*V", r[0]) and "10" not in r[0] and "IV" not in r[0]]
+    std = cv[0][1::2] if cv else []
+    lite = cv[0][2::2] if cv else []
+    return {
+        "pro_families": [re.sub(r"\s+", " ", f) for f in pro_fam],
+        "pro_latest_version": pro[0][2] if len(pro[0]) > 2 else "?",
+        "std_lite_latest_version": sl[0][2] if len(sl[0]) > 2 else "?",
+        "cyclone_v_in_pro": any(re.search(r"Cyclone\W*V", f) and "10" not in f for f in pro_fam),
+        "cyclone_v_standard_all_versions": bool(std) and all(c in ok for c in std),
+        "cyclone_v_lite_all_versions": bool(lite) and all(c in ok for c in lite),
+        "lite_supported_families": [re.sub(r"\s+", " ", r[0]) for r in sl[2:] if any(c in ok for c in r[2::2])],
+        "standard_only_families": [re.sub(r"\s+", " ", r[0]) for r in sl[2:] if any(c in ok for c in r[1::2]) and not any(c in ok for c in r[2::2])],
+    }
+
+
+def toolchain(update):
+    src = json.load(open(SRC))
+    cur = read_chart(src["toolchain"]["chart"])
+    base = json.load(open(BASELINE)) if os.path.exists(BASELINE) else None
+    print("Cyclone V: Pro=%s Standard=%s Lite=%s (Lite families: %s)" % (
+        cur["cyclone_v_in_pro"], cur["cyclone_v_standard_all_versions"], cur["cyclone_v_lite_all_versions"], ", ".join(cur["lite_supported_families"])))
+    changed = base is not None and base != cur
+    if base is None:
+        print("no baseline yet")
+    elif changed:
+        for k in cur:
+            if base.get(k) != cur[k]:
+                print(f"CHANGED {k}: {base.get(k)} -> {cur[k]}")
+    else:
+        print("toolchain support chart: no change")
+    if update or base is None:
+        json.dump(cur, open(BASELINE, "w"), indent=2); print("baseline written")
+    return changed
+
+
+def edition(path):
+    txt = open(path, encoding="utf-8", errors="ignore").read()
+    ver = re.search(r"Quartus Prime Version\s*;?\s*([^;\n]+)", txt)
+    print("version:", ver.group(1).strip() if ver else "not found")
+    print("edition:", "Lite" if "Lite Edition" in txt else "Standard/Pro? (no 'Lite Edition' string)")
+    for k in ("Perform Register Retiming for Performance", "Perform Register Duplication for Performance",
+              "Perform Physical Synthesis for Combinational Logic for Performance", "Physical Synthesis Effort Level", "Fitter Effort"):
+        m = re.search(re.escape(k) + r"\s*;\s*([^;]+);", txt)
+        print(f"{k}: {m.group(1).strip() if m else 'not in this report'}")
+    print("registers retimed by the fitter:", len(re.findall(r"Retimed Register", txt)), "(0 with the option ON would mean it was not applied)")
+    return False
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("what", choices=["docs", "repos"]); ap.add_argument("--update", action="store_true")
+    ap.add_argument("what", choices=["docs", "repos", "toolchain", "edition"]); ap.add_argument("file", nargs="?"); ap.add_argument("--update", action="store_true")
     a = ap.parse_args()
-    sys.exit(2 if (docs if a.what == "docs" else repos)(a.update) else 0)
+    if a.what == "edition":
+        if not a.file:
+            sys.exit("usage: refresh.py edition path/to/ap_core.fit.rpt")
+        sys.exit(2 if edition(a.file) else 0)
+    sys.exit(2 if {"docs": docs, "repos": repos, "toolchain": toolchain}[a.what](a.update) else 0)
 
 
 if __name__ == "__main__":

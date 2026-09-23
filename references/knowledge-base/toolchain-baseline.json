@@ -1,0 +1,31 @@
+{
+  "pro_families": [
+    "Agilex TM 7 \u203b(8)",
+    "Agilex TM 5 \u203b(7)(8)",
+    "Agilex TM 3 \u203b(7)(8)",
+    "Stratix\u00ae 10",
+    "Arria \u00ae 10 / Arria \u00ae 10 SoCs",
+    "Cyclone\u00ae 10GX *(7)"
+  ],
+  "pro_latest_version": "25.3",
+  "std_lite_latest_version": "25.1",
+  "cyclone_v_in_pro": false,
+  "cyclone_v_standard_all_versions": true,
+  "cyclone_v_lite_all_versions": true,
+  "lite_supported_families": [
+    "Cyclone\u00ae 10 LP",
+    "Cyclone \u00ae V / Cyclone \u00ae V SoCs",
+    "Cyclone\u00ae IV",
+    "MAX\u00ae10",
+    "MAX\u00aeV",
+    "MAX\u00aeII"
+  ],
+  "standard_only_families": [
+    "Stratix\u00aeV",
+    "Stratix\u00ae IV",
+    "Arria \u00ae 10 / Arria \u00ae 10 SoCs",
+    "Arria \u00ae V / Arria \u00ae V SoCs",
+    "Arria\u00ae II GZ",
+    "Arria\u00ae II GX"
+  ]
+}
