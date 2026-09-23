@@ -48,7 +48,10 @@ def package(out):
             r = run(sys.executable, "-m", "scripts.package_skill", skill_dir, out, check=False, cwd=os.path.dirname(os.path.dirname(pk[0])))
             if r.returncode == 0 and os.path.exists(dst):
                 return dst
-            print("official packager unavailable/failed, using built-in zip:", (r.stderr or r.stdout).strip().splitlines()[-1:])
+            out_ = (r.stdout or "") + (r.stderr or "")
+            if "Validation failed" in out_:  # do not ship something Claude.ai's validator would reject
+                sys.exit("packaging refused: " + [l for l in out_.splitlines() if "Validation failed" in l][0].strip())
+            print("official packager unavailable, using built-in zip:", out_.strip().splitlines()[-1:])
         with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as z:
             for base, _, files in os.walk(skill_dir):
                 for f in files:
@@ -73,6 +76,10 @@ def main():
     if v.returncode:
         sys.exit("validate failed: fix the errors above (guards protect claims and keep private text out); nothing was changed")
     run(sys.executable, "scripts/kb.py", "index")
+    import re as _re
+    _fm = _re.match(r"---\n.*?description: \"(.*?)\"\n---", open(os.path.join(ROOT, "SKILL.md"), encoding="utf-8").read(), _re.S)
+    if _fm and (len(_fm.group(1)) > 1024 or "<" in _fm.group(1) or ">" in _fm.group(1)):
+        sys.exit(f"SKILL.md description is {len(_fm.group(1))} chars (limit 1024, no angle brackets): shorten it")
 
     print("== 2/5 changes")
     st = run("git", "status", "--short").stdout
