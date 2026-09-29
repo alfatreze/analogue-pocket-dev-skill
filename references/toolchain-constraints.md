@@ -43,6 +43,7 @@ Record the verdict in the knowledge base with the edition and version. Entries t
 | "Lite lacks incremental compilation / design partitioning / partial reconfiguration" | community-reported | secondary sources only; not tested |
 | Rapid Recompile available in Lite | community-reported, likely no | v18.0 comparison snippet says Pro and Standard only; confirm in the GUI |
 | Auto Fit vs Standard Fit | disputed (local KB-048) | Intel message: no optimization skipped when timing needs full effort |
+| Cyclone V MLAB is simple dual-port only (32x20, no mixed width) | docs-verified (KB-073) | Cyclone V Device Handbook vol. 1, 2016.06.10; a device fact, so the edition does not matter. How Quartus reacts to a second read port must be read from your own map report |
 
 ## Report fields worth knowing (Lite 25.1 fit report)
 `Fitter Effort` (Auto Fit), `Physical Synthesis Effort Level` (Normal; higher levels are an untested lever, see open questions), `Perform Register Retiming / Duplication / Combinational Logic ... for Performance`, and the physical-synthesis netlist-change table (`Retimed Register`, `Modified`, `Deleted`).

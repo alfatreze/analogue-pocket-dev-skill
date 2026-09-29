@@ -12,3 +12,8 @@ Pages: developer/docs/changelog/{1-1-beta-1,3,4,5,6,7,1-1,1-2,2-0,2-1,2-3}. Full
 - 2.0: all display modes usable, CRT Trinitron, host 00B8 display mode (0x444D grayscale response), dock-only aspect ratios, day-of-week in 0090.
 - 2.1: 48-bit offsets/sizes: target 0181/0185, 0082/008A/BRAM sizes 48-bit; fixed length 0xFFFFFFFF; files >4 GB need exFAT; USB SD hotkeys; Builds list remembers selection.
 - 2.3: display modes for NGP, NGPC, TG16, Lynx and Vacuum Fluorescent; fixed 0192 not updating slot size fields.
+
+## Pocket OS firmware after framework 2.3 (no new framework version; checked 2026-09-29)
+- 2.6.0 (2026-06-17): openFPGA "Recent" category; quitting a core returns to the openFPGA menu; cached openFPGA menu opens faster. OS Auto Dim / Auto Off power options (idle dimming is an OS function). KB-072.
+- 2.7 (2026-09-04): higher maximum platform/core count; pre-cached core lists load twice as fast; unplugging USB while a core runs no longer unstable. KB-072.
+- Docs site (2026-09): the openFPGA developer docs moved to `/developer/docs/openfpga/...` (old URLs 308-redirect) with no text change; new `/developer/docs/api` (public firmware-list API) and `/developer/docs/platform` (Analogue 3D only).

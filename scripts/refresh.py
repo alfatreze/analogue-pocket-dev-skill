@@ -38,12 +38,27 @@ def extract(raw):
     t = re.sub(r"<h(\d)[^>]*>", lambda m: "\n" + "#" * int(m.group(1)) + " ", t)
     t = re.sub(r"<(p|div|br)[^>]*>", "\n", t)
     t = re.sub(r"<[^>]+>", "", t)
-    return html.unescape(re.sub(r"\n\s*\n+", "\n", t))
+    t = html.unescape(re.sub(r"\n\s*\n+", "\n", t))
+    # 2026-09: the site added code-block widgets ("Fold all", "Copy", "Toggle", folded "{…"); drop that UI chrome so
+    # a site redesign does not look like a content change.
+    t = t.replace("Toggle", "").replace("{\u2026", "{").replace("[\u2026", "[")
+    t = "\n".join(l for l in t.split("\n") if l.strip() not in ("Fold all", "Copy"))
+    return re.sub(r"\n\s*\n+", "\n", t)
 
 
 def slug_of(name):
     n = name[:-4]
     return "/developer/docs" if n == "overview" else "/developer/docs/" + n.replace("__", "/")
+
+
+# Doc sections that are not openFPGA core development (checked 2026-09-29): /api is Analogue's firmware-list API
+# (useful to check the current Pocket firmware, see the knowledge base), /platform documents Analogue 3D files only.
+IGNORE_PREFIXES = ("/developer/docs/api", "/developer/docs/platform")
+
+
+def canon(link):
+    """Since 2026-09 the openFPGA docs live under /developer/docs/openfpga/ (old URLs 308-redirect); map to snapshot names."""
+    return "/developer/docs" + link[len("/developer/docs/openfpga"):] if link.startswith("/developer/docs/openfpga") else link
 
 
 def docs(update):
@@ -56,7 +71,8 @@ def docs(update):
         code, raw = fetch(BASE + path)
         if code != "200":
             gone.append(f"{f} (HTTP {code})"); continue
-        new_links |= set(re.findall(r'href="(/developer/docs/[^"#?]*)"', raw))
+        new_links |= {canon(l) for l in re.findall(r'href="(/developer/docs/[^"#?]*)"', raw)
+                      if not l.startswith(IGNORE_PREFIXES)}
         fresh = extract(raw)
         old = open(os.path.join(SNAP, f), encoding="utf-8").read()
         if hashlib.sha256(fresh.encode()).hexdigest() != hashlib.sha256(old.encode()).hexdigest():

@@ -43,7 +43,7 @@
     {
       "url": "https://github.com/agg23/openfpga-NES",
       "why": "reference savestate/save-size implementation",
-      "head": "a72c7ed30b16a287bc8ec3969e49963574136811"
+      "head": "be5f1303a0df15d012155cb248b6174bb81e64b6"
     },
     {
       "url": "https://github.com/agg23/openfpga-litex",
@@ -68,7 +68,7 @@
     {
       "url": "https://github.com/mincer-ray/openfpga-GBA",
       "why": "GBA port: SDRAM/PSRAM/saves",
-      "head": "a2ab8b37e21a621adb547e9a386c827fd9815512"
+      "head": "c1650694437c392d9157d13881fcb17b85264b96"
     },
     {
       "url": "https://github.com/Mazamars312/Analogue_Pocket_Neogeo_Overdrive",
@@ -78,7 +78,7 @@
     {
       "url": "https://github.com/openfpga-library/analogue-pocket",
       "why": "openFPGA library metadata",
-      "head": "96c55b2bccf7e13d5a24e6f7be3c15cf1081ffb9"
+      "head": "9cf92808f45d33eb8ceffec168958428776ffac3"
     },
     {
       "url": "https://codeberg.org/DidierMalenfant/openFPGA-tutorials",
@@ -98,7 +98,7 @@
     {
       "url": "https://github.com/plasticbugs/pocket-core-template",
       "why": "arcade core template + METHODOLOGY.md (SDRAM capture phase, loader FIFO, bring-up bench lessons)",
-      "head": "34bd75888f768d136a53a5663de8f1b2cf0fb555"
+      "head": "c77563fa84bcc5754d5f1f6ba51168e8849f0e1d"
     },
     {
       "url": "https://github.com/drizzt/openfpga-SMS",
