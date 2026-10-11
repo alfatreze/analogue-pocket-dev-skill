@@ -53,7 +53,7 @@
     {
       "url": "https://github.com/janisc/openfpga-NGPC",
       "why": "AI-built core; hardware-tested save/flush/savestate lessons",
-      "head": "39f1bb34faab44529ddda0adad1dc621a00252cd"
+      "head": "45df20349258889e985b8cb60979f34f6359c1e9"
     },
     {
       "url": "https://github.com/thekoalakoa/paprium-pocket",
@@ -68,7 +68,7 @@
     {
       "url": "https://github.com/mincer-ray/openfpga-GBA",
       "why": "GBA port: SDRAM/PSRAM/saves",
-      "head": "c1650694437c392d9157d13881fcb17b85264b96"
+      "head": "8bd32b54323f2bd1221fd05d0e7b897142ec6344"
     },
     {
       "url": "https://github.com/Mazamars312/Analogue_Pocket_Neogeo_Overdrive",
@@ -78,7 +78,7 @@
     {
       "url": "https://github.com/openfpga-library/analogue-pocket",
       "why": "openFPGA library metadata",
-      "head": "9cf92808f45d33eb8ceffec168958428776ffac3"
+      "head": "d6585b7a6ae7ac169ed8cf7abe6499ebebf9baa1"
     },
     {
       "url": "https://codeberg.org/DidierMalenfant/openFPGA-tutorials",
