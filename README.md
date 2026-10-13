@@ -8,6 +8,7 @@ Unofficial. See [NOTICE.md](NOTICE.md): Analogue's docs and APF code are not inc
 ```bash
 git clone https://github.com/alfatreze/analogue-pocket-dev-skill ~/.claude/skills/analogue-pocket-dev
 python3 ~/.claude/skills/analogue-pocket-dev/scripts/bootstrap.py   # fetch Analogue docs locally (git-ignored)
+python3 ~/.claude/skills/analogue-pocket-dev/scripts/fetch_cyclone_docs.py   # optional: Cyclone V silicon docs, local only
 ```
 Then in Claude Code the skill loads automatically for Pocket/openFPGA work, or run `/analogue-pocket-dev`.
 Claude.ai: zip the folder and upload under Settings > Skills.
@@ -16,7 +17,8 @@ Claude.ai: zip the folder and upload under Settings > Skills.
 - `SKILL.md`: router, mental model, boot sequence, practices, and the rules for evolving the knowledge base
 - `references/*.md`: JSON files, commands, hardware/video/audio, Chip32, SD/packaging, changelog, template internals
 - `references/knowledge-base/`: `INDEX.md`, `entries/KB-*.md` (status: community-reported, docs-verified, source-verified, hardware-validated, disputed, refuted), `approaches.md`, `open-questions.md`, `resources.md`, `sources.json`
-- `scripts/kb.py`: validate / index / new / note / promote / stale. `scripts/refresh.py`: detect doc and repo drift. `scripts/bootstrap.py`: fetch third-party material locally. `scripts/release.py`: validate, review, commit, push and rebuild the `.skill` in one command
+- `references/docs-snapshot/cyclone-v/` (git-ignored, local only): Cyclone V Device Handbook, Datasheet, Overview, errata and two older PDFs, fetched by `scripts/fetch_cyclone_docs.py`; the paraphrased facts from them are KB-143 to KB-166
+- `scripts/kb.py`: validate / index / new / note / promote / stale. `scripts/refresh.py`: detect doc and repo drift. `scripts/bootstrap.py`: fetch third-party material locally. `scripts/fetch_cyclone_docs.py`: fetch the Cyclone V reference documents locally (copyrighted, never committed; needs `pypdf` for the PDF text). `scripts/release.py`: validate, review, commit, push and rebuild the `.skill` in one command
 
 ## How knowledge is graded
 A claim starts `community-reported`. It becomes `source-verified` only with two independent sources (or docs plus code) and `hardware-validated` only with a recorded Pocket test. Contradicted claims are kept as `refuted`/`disputed`. The skill instructs Claude to treat unvalidated claims as leads to test, never facts.
