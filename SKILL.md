@@ -21,6 +21,7 @@ Sources (all read in full): https://www.analogue.co/developer/docs/* (every page
 | Which framework version added what | `references/changelog.md` |
 | Real template/example RTL behavior (what is and isn't implemented) | `references/template-and-examples.md`, `references/repo-src/*.v` |
 | Verbatim doc text for anything above | `references/docs-snapshot/*.txt` (local after bootstrap; grep it) |
+| Cyclone V silicon reference (ALM/LAB, M10K/MLAB, DSP blocks, PLLs/clocking, I/O, external memory, power, datasheet, errata) | `references/docs-snapshot/cyclone-v/` (local only; run `python3 scripts/fetch_cyclone_docs.py` once; grep `altera/*.txt` for the Device Handbook Vol 1, Datasheet, Overview and GX/GT/E errata) |
 | Quartus edition and Cyclone V constraints (Lite/Standard yes, Pro no), how to verify an edition claim, fetching Intel docs | `references/toolchain-constraints.md` |
 | Community-learned, evidence-graded knowledge (saves/flush, CDC, timing, video, savestates...) | `references/knowledge-base/INDEX.md` then the entry file |
 | Design patterns and workarounds seen in real cores | `references/knowledge-base/approaches.md` |
