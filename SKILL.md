@@ -26,7 +26,8 @@ Sources (all read in full): https://www.analogue.co/developer/docs/* (every page
 | Community-learned, evidence-graded knowledge (saves/flush, CDC, timing, video, savestates...) | `references/knowledge-base/INDEX.md` then the entry file |
 | Design patterns and workarounds seen in real cores | `references/knowledge-base/approaches.md` |
 | Testing and verification strategy, debug and trace channels (KB-241 to KB-243, link-port voltage KB-248, UART pads KB-249), test ladder and AI-agent workflow | `references/knowledge-base/approaches.md` items 10-18 (16 = what a host model must exercise, 17 = Chip32 PC testing, 18 = Virtual JTAG caveats), `open-questions.md` OQ-15 to OQ-26 |
-| Choosing a JTAG or serial debug link (ISSP, SignalTap, Virtual JTAG, JTAG-to-Avalon master, JTAG UART, link port), and reusable RTL for it | KB-245 to KB-247 (vendor rules, low confidence), `approaches.md` item 15, and the public `pocket-testkit` repo: `docs/DEBUG_LINK_CHOICE.md`, `rtl/README.md`, `tools/choose_link.py` (simulated only, not hardware-tested) |
+| Choosing a JTAG or serial debug link (ISSP, SignalTap, Virtual JTAG, JTAG-to-Avalon master, JTAG UART, link port), and reusable RTL for it | KB-245 to KB-247 (vendor rules, low confidence), `approaches.md` item 15, and the public `pocket-testkit` repo: `methods/debug-links/` (`CHOOSING.md`, `SERIAL.md`, `rtl/README.md`, `tools/choose_link.py`; simulated only, not hardware-tested) |
+| Overview of all testing methods (file checks, host tests, fuzzing, formal, simulation, timing gates, report codes, debug links, Pocket's own tools, CI), how to choose, and a Claude project starter with a test ladder | `pocket-testkit` repo: `methods/README.md`, `docs/choosing.md`, `docs/methodology.md`, `docs/pocket-notes.md`, `starter/README.md` |
 | Unknowns with a test plan | `references/knowledge-base/open-questions.md` |
 | Where community knowledge lives and what could not be reached | `references/knowledge-base/resources.md` |
 
