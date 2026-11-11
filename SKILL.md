@@ -25,6 +25,8 @@ Sources (all read in full): https://www.analogue.co/developer/docs/* (every page
 | Quartus edition and Cyclone V constraints (Lite/Standard yes, Pro no), how to verify an edition claim, fetching Intel docs | `references/toolchain-constraints.md` |
 | Community-learned, evidence-graded knowledge (saves/flush, CDC, timing, video, savestates...) | `references/knowledge-base/INDEX.md` then the entry file |
 | Design patterns and workarounds seen in real cores | `references/knowledge-base/approaches.md` |
+| Testing and verification strategy, debug and trace channels (KB-241 to KB-243, link-port voltage KB-248, UART pads KB-249), test ladder and AI-agent workflow | `references/knowledge-base/approaches.md` items 10-18 (16 = what a host model must exercise, 17 = Chip32 PC testing, 18 = Virtual JTAG caveats), `open-questions.md` OQ-15 to OQ-26 |
+| Choosing a JTAG or serial debug link (ISSP, SignalTap, Virtual JTAG, JTAG-to-Avalon master, JTAG UART, link port), and reusable RTL for it | KB-245 to KB-247 (vendor rules, low confidence), `approaches.md` item 15, and the public `pocket-testkit` repo: `docs/DEBUG_LINK_CHOICE.md`, `rtl/README.md`, `tools/choose_link.py` (simulated only, not hardware-tested) |
 | Unknowns with a test plan | `references/knowledge-base/open-questions.md` |
 | Where community knowledge lives and what could not be reached | `references/knowledge-base/resources.md` |
 
