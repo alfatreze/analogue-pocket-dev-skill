@@ -1,0 +1,69 @@
+# Verification field notes: what a full verification stack found, and what it did not
+
+Written 2026-11-12 from one project's stack (a gallery core with a hardware image decoder, 128 KB soft-CPU RAM, an own 50 MHz decoder clock). **One project, n = 1.** Evidence labels: **simulation** (ran in RTL/CPU simulation), **formal** (SymbiYosys), **host** (ran on a PC), **quartus** (a map or fit report), **hardware** (a Pocket run, owner-observed). Nothing here is `hardware-validated` in the knowledge-base sense unless it says so. The testing methods themselves are catalogued in the public `pocket-testkit` repo (`methods/`); this file records field results, recipes and where our experience differs from its guidance.
+
+## What each step bought (honest scorecard)
+
+| Step | Result in this project | Real bug in the design found? | Verdict |
+|---|---|---|---|
+| Reference models + mutation sweeps (per block) | Bit-exact blocks; the sweep found two features that no test would have noticed removed | yes, test gaps | **High value, cheap. Keep.** A first run that passes is a smell; run the mutants |
+| Structure-aware fuzzing of the C parsers | Two 32-bit wrap-around bounds-check bugs (`a + b <= n` wraps for `a` near 2^32) in file-container parsing | **yes, two** | **High value.** Blind byte fuzzing found nothing (see below) |
+| Formal (SymbiYosys), small control blocks | Arbiters and a tile FSM proved for all inputs; a two-clock FIFO checked to a bound; no design bug | no | Medium: strong guarantee for small blocks, found nothing here |
+| Block timing probe (virtual pins, real clock) | 15 to 40 minutes against 1h45 for the full fit | no (it passed) | Useful as a gate before a long fit; one data point: pessimistic by 1.3 ns against the later full fit |
+| Verilator line coverage | 97.6 to 100% of lines hit; every miss an unreachable branch; found a testbench race (below) | no | Low to medium. The second simulator was worth more than the coverage numbers |
+| CDC ratio/phase sweeps, performance budgets | All passed; a budget check bites when tightened | no | Cheap insurance |
+| Post-synthesis netlist simulation | Passed after 32 minutes of Verilator, needed workarounds (below) | no | **Lowest value.** Matches pocket-testkit's "lower priority" |
+| Whole-core simulation (real CPU, SDRAM chip model, scripted host) | Found only simulator and testbench artefacts (below), no RTL or firmware bug; now a regression harness with a golden frame | no | High once built, but expect most early "bugs" to be your model |
+| Golden frame of the whole core | A host-model fault the CPU check could not see (1,835 pixels differed) | no (a model fault) | Good regression value; it is not an independent oracle |
+
+The one thing that made the difference on the device: the first Pocket run of the decoder bitstream worked (`hardware`: all pictures shown, the version-1 pictures loaded quickly, old pictures unchanged). The stack did not predict anything that went wrong; it also did not miss anything that mattered on that first run. Treat that as a weak confirmation only.
+
+## Whole-core simulation in Icarus: recipe and traps (simulation)
+
+- Build tree: copy the sources to a temp directory and make Icarus elaborate them with a script (hoist use-before-declaration, which Quartus accepts and Icarus rejects), keep the synthesised sources untouched. Use Intel's `altera_mf.v` (licensed, never committed), hand-write only the PLL, and use the real soft CPU and a timing-checked SDRAM chip model.
+- **`always @(*)` is not evaluated at time 0 in Icarus** (it waits for an input to change). A register that Quartus powers up at 0, given an initialiser `= 0` by a blanket "zero-init" pass, can hide the first evaluation of a combinational block that depends on it. Seen: the CPU's instruction-cache tag write enable stayed 0 for the whole cache flush, the tags stayed X, every fetch "hit" on X and the CPU took an illegal instruction at address 0 for ever. **Fix: turn the CPU file's `always @(*)` into `always_comb`** (one evaluation at time 0). Symptom signature: the outcome moves with unrelated edits. Do not "fix" it by removing initialisers from the CPU: a divider register without a reset then leaves X.
+- Registers that Quartus powers at 0 include arrays marked `ramstyle = "logic"` (built from registers): zero them in the simulation, leave block-RAM arrays alone (their contents are not promised).
+- **Pace the host model like the real host.** Target-read data comes back as bridge writes into the core's data loader, which has a small FIFO (4 words in this build) and drains bytes at the system clock. Writes 3 bridge clocks apart dropped words and left the index header X; 40 clocks per word (the pace used for the firmware load) works. Consistent with KB-028 (a byte every 8 clocks on the real host).
+- Debug switches worth building into the testbench from the start: reset history and the first fetch clocks, a PC histogram (the 16 busiest addresses), "who called function F" (return address at its entry), the CPU data bus once a millisecond (a load with an X address never completes: `dCYC` high, fixed address, X). A PC histogram plus `addr2line` located two hangs in minutes.
+- Speed in this project: about 25 s of wall time per simulated millisecond; a boot of 5.7 ms is a few minutes; a golden frame 20 ms after reset exit takes about 16 minutes. Keep the golden at a fixed simulated time; the simulation is deterministic, so a frame reproduces bit for bit.
+- A golden frame detects change, not correctness: it was written from the current behaviour. Keep the inputs' SHA-256 next to it, so a changed input is not mistaken for a behaviour change.
+
+## Run testbenches in two simulators (simulation)
+A testbench that drove a write port with non-blocking assignments at the edge the design samples passed in Icarus and failed in Verilator (every write but the first lost). The fix is to drive on the falling edge. Verilator also cannot build in a path with spaces: build in a temp directory.
+
+## Formal with SymbiYosys (formal)
+- Small, single-clock control blocks (arbiters, FSMs): **k-induction proves the property for all input sequences**, not just to a bound. Large counters and two-clock FIFOs did not converge in PDR or induction within minutes: fall back to a bounded check (here 220 steps at four clock ratios) and say so.
+- Yosys cannot read a submodule's internal register from a wrapper (hierarchical references are implicitly declared wires). Put the properties in a file that the module includes under `ifdef FORMAL`, so they see the module's own state (three lines in the RTL, not synthesised).
+- A `case` function with constants becomes a ROM, which k-induction treats as free memory: add `memory_map -rom-only` to the script, otherwise a correct design fails the induction step.
+- Mutants: each hand-made fault must make the proof fail. A mutant that needs 2^17 clocks (a watchdog) cannot be reached by a bounded run; accept an induction-step failure on the right assertion as the kill and say so.
+- Environment assumptions are the weak spot: state them in the file header (here: "done only for an outstanding request"). Two-clock FIFOs: model both clocks from one step counter with a free phase and several ratios; this checks function, not metastability.
+
+## Fuzzing file parsers (host)
+- If the format has a checksum, **blind byte mutation reaches nothing**: the first run found no bug and 6 of 8 hand-made mutants survived. Mutate whole header fields (edge values, +-64, bit flips, values just below 2^32) and **repair the CRCs** so the input reaches the range checks. Check the fuzzer itself with hand-made mutants (and note that the fuzzer's own CRC-repair bounds can wrap in 32 bits).
+- Put the input at the start of a large `PROT_NONE` reservation so a wild read faults at once (an ASan report for a 4 GB offset was not deterministic).
+- Pattern to look for in review: `offset + count * size <= limit` in 32-bit arithmetic. Write `offset > limit || count * size > limit - offset` instead.
+- Model the hardware blocks the firmware drives (a register model that flags reads outside the resident file), so driver bugs show too.
+
+## Timing probes and netlist simulation (quartus)
+- Probe = the block with every input and output one register away from a virtual pin, the real clock periods and the real device settings, run on the build machine. Fmax at the slow 85C corner. Gate used: at least 0.5 ns of slack at the real clock before integrating a block. Measured here: 39 min for a block of about 9,000 registers, and the full fit later had 1.3 ns more slack than the probe (pessimistic). pocket-testkit warns that an isolated block is an upper bound because the integrated placement is worse; that holds at 90 to 99% occupancy (KB-011). This design used about 79% of its RAM blocks and 71% of its DSPs, where the probe was the safe side. One data point; hold was not checked by the probe.
+- Netlist simulation: functional netlist from `quartus_eda`; turn DSP inference off for the run (the DSP models are encrypted and not simulable in Icarus or Verilator), simulate in Verilator (Icarus could not read the vendor package). It confirmed what simulation already showed and found nothing for 32 minutes plus setup. Read the map report for inferred RAM modes first.
+
+## An installer trap (hardware-adjacent, host)
+A developer package that carries its own media under a shared library folder **overwrites the card's library index and any file with the same name**, and the dry run did not say so. Seen: a 5-picture index would have replaced the card's 47-picture index, and 5 new files had the same names as 5 old ones. Merge the index first, rename colliding files, back up the card's index, and make the installer list overwritten files in its dry run.
+
+## Where this differs from pocket-testkit, or adds to it
+Compared with the kit's methods, docs and starter as of its 2026-11-11 commits.
+- **Agree:** the ladder (cheapest first), evidence labels, one verdict per check, an independent oracle plus mutation, formal for small control blocks only, netlist simulation as low priority, vendor models for FIFOs and RAM with a hand-written PLL, no polling of long jobs, state the finish time.
+- **Add:** the kit marks formal and fuzzing "guide only"; this file has working recipes (above). Its evidence labels have no `formal` or `netlist`; useful because an unbounded proof and a bounded one say different things.
+- **Differ, whole-core clocks:** the kit suggests random clock phase per run. This project used fixed, deterministic phases in the whole-core run (needed for a golden frame) and swept ratios and phases in the block-level CDC testbenches. Both are compatible: random or swept phases where the clocks cross, determinism where you compare frames.
+- **Differ, block timing:** see the probe note above (pessimistic here, an upper bound in the kit's rule).
+- **Differ, who writes the oracle:** the kit says the author of the design should not write its oracle. In this project the same agent wrote most tests, including the formal properties and the golden frame. Mutation mitigates this; the Python reference models (derived from a published codec) are the only independent oracle. Treat the golden frame and the formal properties as regression and consistency checks.
+- **Differ, one device trip:** the kit asks for the written test list before the install. Here the list of things to look at came after the install. Do it before.
+- **Not yet adopted here (cheap, worth doing):** a single machine-readable verdict runner over the ladder (`ladder.json` + `verdict.py`); a map-report gate (resource budget, inferred RAM mode, ignored SDC constraints); a `formal`/`netlist` evidence label; more than two seeds per fit (the kit says three or four are data).
+
+## A report gate needs a baseline, not absolute rules (quartus)
+Read from the reports of one accepted fit (Quartus 25.1 Lite): a healthy build had 12 `RAM logic ... is uninferred` messages (276004 small array, 276006 `ramstyle = "logic"`, 276007 asynchronous read: small arrays that rightly became registers), 212 `Assignment set_output_delay is accepted but has some problems` warnings (332054; they appear in both the fitter and the timing-analyser logs, 106 each: the SDC is read twice, nothing is dropped) and 595 warnings in all, none critical. An absolute "no uninferred RAM, no constraint warnings" gate would fail a healthy build. Gate on the **difference to a baseline** of an accepted fit (resource percentages, inferred and uninferred RAM node names, warning counts by id), fail only on negative slack, a Critical Warning, a resource above a limit and a few messages that must never appear (`Ignored filter`, `could not be matched`: an SDC pattern that matched nothing silently drops the constraint, KB-027). The reports (`*.map.rpt`, `*.fit.rpt`, `*.sta.rpt`, `*.summary` in `output_files`) have to be copied from the build machine; a map-only gate works on the `.map.rpt` before placement. Occupancy of this fit: ALMs 89%, RAM blocks 79%, DSPs 71%, within a point of the 90 to 99% range where KB-011 says placement dominates.
+
+## Recording outcomes across projects
+pocket-testkit's `methods/effectiveness` defines one JSON-lines record per test result (method, technique, target, evidence label, cost in minutes, outcome, findings classified as real bug / test gap / tool artefact / model fault with how late each would otherwise have surfaced, mutants killed, later confirmation) and a tool that pools the files of several projects into a table of which methods paid off. The first 15 records of the project behind this file are the scorecard above in machine form: only fuzzing (2 bugs) and a human reading of an install plan (1) found real bugs; simulation cost the most minutes and found only artefacts and test gaps; the formal proofs found no bug. One project, estimated costs.
+
