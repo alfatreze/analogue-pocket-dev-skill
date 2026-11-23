@@ -102,7 +102,7 @@ def main():
         print("== 3/5 commit")
         if ask("Commit these changes?", a.yes):
             msg = a.message or (input("Commit message: ").strip() if sys.stdin.isatty() and not a.yes else "Update knowledge base")
-            msg += "\n\nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+            # No AI attribution trailer: the commit is the maintainer's own (owner rule, 2026-11-12: never add Co-Authored-By or any AI attribution to a commit).
             run("git", "add", "-A")
             r = run("git", "commit", "-q", "-m", msg, check=False)
             if r.returncode:
