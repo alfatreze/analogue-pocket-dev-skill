@@ -1,12 +1,13 @@
 ---
 id: KB-004
 title: Save flush is a bridge READ sequence at the slot's load address; a core can serve it from a demuxed address region
-status: source-verified
+status: hardware-validated
 confidence: medium
 first_seen: 2026-09-20
-last_verified: 2026-09-20
+last_verified: 2026-11-23
 tags: [save, bridge, flush, data_unloader]
 applies_to: observed on hardware by one project (NGPC)
+evidence: A core under test on a Pocket (2026-11-22/23): for a nonvolatile slot whose load address lies in a core-owned bridge region, the Pocket read the slot back with ordinary bridge reads at Quit AND at a direct power-off and rewrote the file (8192 bytes); no hang. The reads are buffered by one word (KB-008): the core must latch bridge_addr at the bridge_rd strobe and return that word on the NEXT transaction, or the file comes back one word early with the last word zero (observed, fixed).
 sources:
   - https://github.com/janisc/openfpga-NGPC/blob/main/target/pocket/core_top.v
   - https://github.com/agg23/analogue-pocket-utils/blob/master/ip/data_unloader.sv

@@ -1,12 +1,13 @@
 ---
 id: KB-074
 title: A nonvolatile slot is only written back if it was loaded; the core must create the first save file itself with a target data-slot write
-status: community-reported
+status: disputed
 confidence: medium
 first_seen: 2026-09-29
-last_verified: 2026-09-29
+last_verified: 2026-11-22
 tags: [save,nonvolatile,target-commands,size-table]
 applies_to: community arcade cores built from plasticbugs/pocket-core-template (Punch-Out, NBA Jam), 2026-09; Pocket firmware version not stated
+evidence: A core under test on a Pocket (2026-11-22/23): the exit flush DID create a missing save file when parameters bit 5 was set and the core wrote 8192 into the slot's size-table entry, with no core-issued target write; the same core with the entry left at 0 wrote nothing. Contradicts claim 1 as worded; supports claim 2.
 sources:
   - https://github.com/plasticbugs/pocket-core-template/blob/HEAD/METHODOLOGY.md
 ---

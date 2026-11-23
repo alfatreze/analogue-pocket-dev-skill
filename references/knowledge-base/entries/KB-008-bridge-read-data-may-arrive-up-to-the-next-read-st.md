@@ -1,12 +1,13 @@
 ---
 id: KB-008
 title: Bridge read data may arrive up to the next read strobe
-status: docs-verified
+status: hardware-validated
 confidence: high
 first_seen: 2026-09-20
-last_verified: 2026-09-20
+last_verified: 2026-11-23
 tags: [bridge, timing, reads]
 applies_to: all framework versions
+evidence: A core under test on a Pocket (2026-11-22): the shell latches the address, samples bridge_rd_data for the host, then pulses bridge_rd with the address held; the word requested by that strobe is returned by the NEXT transaction (the host discards a first priming return). A core answering for the live address delivered file word j = RAM word j+1 and a zero last word; latching the address at the strobe fixed it.
 sources:
   - https://www.analogue.co/developer/docs/bus-communication
 ---

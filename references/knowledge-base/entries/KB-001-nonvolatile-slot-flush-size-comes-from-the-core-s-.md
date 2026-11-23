@@ -1,12 +1,13 @@
 ---
 id: KB-001
 title: Nonvolatile slot flush size comes from the core's data-slot size table, indexed by slot position
-status: source-verified
+status: hardware-validated
 confidence: high
 first_seen: 2026-09-20
-last_verified: 2026-09-20
+last_verified: 2026-11-23
 tags: [save, size-table, nonvolatile, flush]
 applies_to: framework 1.1-2.3 as observed in shipping cores
+evidence: A core under test on a Pocket (2026-11-22/23): the size in the slot's Dataslot ID/Size Table entry decides what the exit flush writes. With the entry left at 0 for a slot that had no file, nothing was written; after the core wrote 8192 into the entry, the Pocket created the file and wrote 8192 bytes, at a menu Quit and at a direct power-off. With a file present APF filled the entry itself (8192). The entry for a never-loaded slot exists and reads 0.
 sources:
   - https://www.analogue.co/developer/docs/core-definition-files/data-json
   - https://github.com/agg23/openfpga-NES/blob/main/target/pocket/core_top.v
